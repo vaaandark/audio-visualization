@@ -9,13 +9,12 @@ use std::collections::VecDeque;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
-use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-const FFT_SIZE: usize = 1024;
+const FFT_SIZE: usize = 128;
 
 struct App<T> {
-    visual: Arc<Mutex<Visual<T>>>,
+    visual: Visual<T>,
     duration: Duration,
     start: Instant,
     samples: Vec<i16>,
@@ -45,7 +44,7 @@ impl<T> Visual<T> {
 impl<T> App<T> {
     fn new(window_size: usize, duration: Duration, start: Instant, samples: Vec<i16>) -> Self {
         Self {
-            visual: Arc::new(Mutex::new(Visual::new(window_size))),
+            visual: Visual::new(window_size),
             duration,
             start,
             samples,
@@ -62,8 +61,6 @@ where
             ui.heading("Audio Visualization");
             let points = self
                 .visual
-                .lock()
-                .unwrap()
                 .samples
                 .iter()
                 .enumerate()
@@ -98,7 +95,7 @@ where
             buffer
                 .iter()
                 .map(|c| (c.re * c.re + c.im * c.im).sqrt())
-                .for_each(|y| self.visual.lock().unwrap().push(y.into()));
+                .for_each(|y| self.visual.push(y.into()));
         }
 
         ctx.request_repaint();
