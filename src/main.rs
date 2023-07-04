@@ -1,5 +1,6 @@
 use eframe::egui;
-use eframe::egui::plot::{Line, Plot, PlotPoints};
+use eframe::egui::plot::{Bar, BarChart, Plot, Legend};
+use eframe::epaint::Color32;
 use lofty::mpeg::MpegFile;
 use lofty::{AudioFile, ParseOptions};
 use rodio::{Decoder, OutputStream};
@@ -59,17 +60,23 @@ where
     fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Audio Visualization");
-            let points: PlotPoints = self
+            let points = self
                 .visual
                 .lock()
                 .unwrap()
                 .samples
                 .iter()
                 .enumerate()
-                .map(|(i, val)| [i as f64, (*val).into()])
+                .map(|(i, val)| Bar::new(i as f64, (*val).into()))
                 .collect();
-            let line = Line::new(points);
-            Plot::new("visual").show(ui, |plot_ui| plot_ui.line(line));
+            let chart = BarChart::new(points).color(Color32::LIGHT_BLUE);
+            Plot::new("visual")
+                .legend(Legend::default())
+                .allow_zoom(false)
+                .allow_drag(false)
+                .show_x(true)
+                .show_y(true)
+                .show(ui, |plot_ui| plot_ui.bar_chart(chart));
         });
 
         // 当前位置
