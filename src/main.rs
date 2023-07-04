@@ -1,9 +1,9 @@
 use eframe::egui;
-use eframe::egui::plot::{Bar, BarChart, Plot, Legend};
+use eframe::egui::plot::{Bar, BarChart, Legend, Plot};
 use eframe::epaint::Color32;
 use lofty::mpeg::MpegFile;
 use lofty::{AudioFile, ParseOptions};
-use rodio::{Decoder, OutputStream};
+use rodio::{Decoder, OutputStream, Source};
 use rustfft::{num_complex::Complex, FftPlanner};
 use std::collections::VecDeque;
 use std::env;
@@ -109,11 +109,16 @@ fn main() -> Result<(), eframe::Error> {
     let duration = audio_file.properties().duration();
     let start = Instant::now();
 
-    let (_stream, _stream_handle) = OutputStream::try_default().unwrap();
-    let file = BufReader::new(File::open(path).unwrap());
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let file = BufReader::new(File::open(&path).unwrap());
     let source = Decoder::new(file).unwrap();
+    let samples: Vec<i16> = source.collect();
 
-    let app: App<f32> = App::new(FFT_SIZE, duration, start, source.collect());
+    let file = BufReader::new(File::open(&path).unwrap());
+    let source = Decoder::new(file).unwrap();
+    stream_handle.play_raw(source.convert_samples()).unwrap();
+
+    let app: App<f32> = App::new(FFT_SIZE, duration, start, samples);
     let options = eframe::NativeOptions::default();
     eframe::run_native("Audio Visualaztion", options, Box::new(|_cc| Box::new(app)))
 }
